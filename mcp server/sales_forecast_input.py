@@ -163,8 +163,8 @@ class ProphetSalesForecast:
                 yearly_seasonality='auto',
                 weekly_seasonality=False,
                 daily_seasonality=False,
-                changepoint_prior_scale=0.01,  # 减少突变点影响（从0.05降低到0.01）
-                seasonality_prior_scale=5.0,  # 增加季节性强度（从10.0降低到5.0）
+                changepoint_prior_scale=0.05,  # 减少突变点影响
+                seasonality_prior_scale=10.0,  # 增加季节性强度
                 holidays_prior_scale=10.0,
                 mcmc_samples=0,  # 不使用MCMC（小数据更快）
                 interval_width=0.95  # 95%置信区间
