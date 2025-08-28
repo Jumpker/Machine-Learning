@@ -95,10 +95,7 @@ class ProphetSalesForecast:
             ax.ticklabel_format(style='plain', axis='y')
             
             plt.tight_layout()
-            
-            filename = 'data_trend.png'
-            plt.savefig(filename)
-            print(f"数据趋势图已保存为 '{filename}'")
+            plt.show()
             plt.close()
         
         return self.report['data_exploration']
@@ -202,7 +199,7 @@ class ProphetSalesForecast:
                 ax.ticklabel_format(style='plain', axis='y')
             
             plt.tight_layout()
-            plt.savefig('prophet_components.png')
+            plt.show()
             plt.close()
             
             # 计算评估指标（使用历史数据）
@@ -286,22 +283,17 @@ class ProphetSalesForecast:
             ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
             ax.ticklabel_format(style='plain', axis='y')
             
-            # 保存图表
-            filename = 'prophet_forecast.png'
-            plt.savefig(filename)
-            print(f"预测图表已保存为 '{filename}'")
+            # 显示图表
+            plt.show()
             plt.close()
             
         except Exception as e:
             print(f"绘图错误: {str(e)}")
             raise
     
-    def generate_report(self, output_file=None):
+    def generate_report(self):
         """
-        生成预测报告
-        
-        参数:
-            output_file: 输出文件路径（可选）
+        生成预测报告（仅返回报告数据，不保存文件）
         """
         if self.time_series is None:
             raise ValueError("请先加载数据")
@@ -344,13 +336,6 @@ class ProphetSalesForecast:
                 return obj
             
             report = convert_types(report)
-            
-            # 保存报告
-            if output_file:
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump(report, f, ensure_ascii=False, indent=4)
-                print(f"预测报告已保存为 '{output_file}'")
-            
             return report
             
         except Exception as e:
@@ -408,10 +393,9 @@ def main():
         
         # 生成报告
         print("\n正在生成预测报告...")
-        report_file = f'forecast_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-        forecast_system.generate_report(report_file)
+        forecast_system.generate_report()
         
-        print(f"\n销量预测完成！报告已保存为 '{report_file}'")
+        print("\n销量预测完成！")
         
     except Exception as e:
         print(f"系统运行错误: {str(e)}")
