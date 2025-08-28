@@ -79,24 +79,7 @@ class ProphetSalesForecast:
             'data_points': len(time_series)
         }
         
-        # 绘制数据图表
-        if plot:
-            plt.figure(figsize=(12, 6))
-            plt.plot(time_series)
-            plt.title('The sales trend of the product')
-            plt.xlabel('Date')
-            plt.ylabel('Sales volume')
-            plt.grid(True)
-            
-            # 禁用科学计数法，使用常规数字格式
-            from matplotlib.ticker import ScalarFormatter
-            ax = plt.gca()
-            ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
-            ax.ticklabel_format(style='plain', axis='y')
-            
-            plt.tight_layout()
-            plt.show()
-            plt.close()
+        # 数据图表绘制已移除
         
         return self.report['data_exploration']
     
@@ -188,19 +171,8 @@ class ProphetSalesForecast:
             # 预测
             self.prophet_forecast = self.prophet_model.predict(future)
             
-            # 模型诊断
-            print("\nProphet 模型组件分解:")
-            fig = self.prophet_model.plot_components(self.prophet_forecast)
-            
-            # 禁用科学计数法，使用常规数字格式
-            from matplotlib.ticker import ScalarFormatter
-            for ax in fig.axes:
-                ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
-                ax.ticklabel_format(style='plain', axis='y')
-            
-            plt.tight_layout()
-            plt.show()
-            plt.close()
+            # Prophet模型组件分解图已移除
+            print("\nProphet 模型组件分解已完成")
             
             # 计算评估指标（使用历史数据）
             historical = self.prophet_forecast[self.prophet_forecast['ds'] <= time_series.index.max()]
@@ -230,7 +202,7 @@ class ProphetSalesForecast:
     
     def plot_forecast(self, title=None, figsize=(12, 6)):
         """
-        绘制预测结果
+        生成绘制预测结果的Python代码并保存到txt文件
         
         参数:
             title: 图表标题
@@ -242,105 +214,103 @@ class ProphetSalesForecast:
         time_series = self.time_series
             
         try:
-            plt.figure(figsize=figsize)
-            
-            # 绘制历史数据
-            plt.plot(time_series.index, time_series, 'b-', label='Historical Sales')
-            
-            # 绘制预测数据
+            # 准备数据
             forecast_dates = self.prophet_forecast['ds']
             forecast_values = self.prophet_forecast['yhat']
+            lower_bound = self.prophet_forecast['yhat_lower']
+            upper_bound = self.prophet_forecast['yhat_upper']
             
             # 分离历史和预测
             history_mask = forecast_dates <= time_series.index.max()
             future_mask = forecast_dates > time_series.index.max()
             
-            # 绘制历史拟合
-            plt.plot(forecast_dates[history_mask], forecast_values[history_mask], 'g--', label='Model Fit')
+            # 将数据转换为可序列化的格式
+            historical_dates = time_series.index.strftime('%Y-%m-%d').tolist()
+            historical_values = time_series.values.tolist()
             
-            # 绘制预测
-            plt.plot(forecast_dates[future_mask], forecast_values[future_mask], 'r--', label='Forecasted Sales')
+            forecast_dates_str = forecast_dates.dt.strftime('%Y-%m-%d').tolist()
+            forecast_values_list = forecast_values.tolist()
+            lower_bound_list = lower_bound.tolist()
+            upper_bound_list = upper_bound.tolist()
             
-            # 绘制置信区间
-            plt.fill_between(
-                forecast_dates, 
-                self.prophet_forecast['yhat_lower'], 
-                self.prophet_forecast['yhat_upper'], 
-                color='gray', alpha=0.2, label='95% Confidence Interval'
-            )
+            # 生成Python绘图代码
+            plot_code = f'''
+# 预测图表绘制代码
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+# 历史数据
+historical_dates = {historical_dates}
+historical_values = {historical_values}
+
+# 预测数据
+forecast_dates = {forecast_dates_str}
+forecast_values = {forecast_values_list}
+lower_bound = {lower_bound_list}
+upper_bound = {upper_bound_list}
+
+# 转换日期格式
+historical_dates = [datetime.strptime(date, "%Y-%m-%d") for date in historical_dates]
+forecast_dates = [datetime.strptime(date, "%Y-%m-%d") for date in forecast_dates]
+
+# 分离历史和预测
+history_mask = [date <= max(historical_dates) for date in forecast_dates]
+future_mask = [date > max(historical_dates) for date in forecast_dates]
+
+# 创建历史和预测数据列表
+history_dates = [forecast_dates[i] for i in range(len(forecast_dates)) if history_mask[i]]
+history_values = [forecast_values[i] for i in range(len(forecast_values)) if history_mask[i]]
+future_dates = [forecast_dates[i] for i in range(len(forecast_dates)) if future_mask[i]]
+future_values = [forecast_values[i] for i in range(len(forecast_values)) if future_mask[i]]
+
+# 绘制图表
+plt.figure(figsize={figsize})
+
+# 绘制历史数据
+plt.plot(historical_dates, historical_values, 'b-', label='Historical Sales')
+
+# 绘制历史拟合
+plt.plot(history_dates, history_values, 'g--', label='Model Fit')
+
+# 绘制预测
+plt.plot(future_dates, future_values, 'r--', label='Forecasted Sales')
+
+# 绘制置信区间
+plt.fill_between(forecast_dates, lower_bound, upper_bound, color='gray', alpha=0.2, label='95% Confidence Interval')
+
+# 设置标题和标签
+plt.title('{title or "Sales Forecast"}')
+plt.xlabel('Date')
+plt.ylabel('Sales Volume')
+plt.legend()
+plt.grid(True)
+
+# 禁用科学计数法，使用常规数字格式
+from matplotlib.ticker import ScalarFormatter
+ax = plt.gca()
+ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+ax.ticklabel_format(style='plain', axis='y')
+
+# 显示图表
+plt.tight_layout()
+plt.show()
+'''
             
-            # 设置标题和标签
-            title = title or 'Sales Forecast'
-            plt.title(title)
-            plt.xlabel('Date')
-            plt.ylabel('Sales Volume')
-            plt.legend()
-            plt.grid(True)
+            # 保存Python代码到txt文件
+            filename = 'prophet_forecast_code.txt'
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(plot_code)
             
-            # 禁用科学计数法，使用常规数字格式
-            from matplotlib.ticker import ScalarFormatter
-            ax = plt.gca()
-            ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
-            ax.ticklabel_format(style='plain', axis='y')
-            
-            # 显示图表
-            plt.show()
-            plt.close()
+            print(f"预测图表的Python代码已保存为 '{filename}'")
+            print("您可以运行该文件中的代码来生成预测图表。")
             
         except Exception as e:
-            print(f"绘图错误: {str(e)}")
+            print(f"生成绘图代码错误: {str(e)}")
             raise
     
-    def generate_report(self):
-        """
-        生成预测报告（仅返回报告数据，不保存文件）
-        """
-        if self.time_series is None:
-            raise ValueError("请先加载数据")
-            
-        time_series = self.time_series
-            
-        try:
-            # 生成报告
-            report = self.report.copy()
-            
-            # 添加时间戳
-            report['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            # 添加数据摘要
-            report['summary'] = {
-                'data_points': len(time_series),
-                'date_range': {
-                    'start': str(time_series.index.min()),
-                    'end': str(time_series.index.max())
-                },
-                'best_model': self.report['best_model']
-            }
-            
-            # 确保所有值为JSON可序列化
-            def convert_types(obj):
-                if isinstance(obj, (np.integer, np.int64)):
-                    return int(obj)
-                elif isinstance(obj, (np.floating, np.float64)):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                elif isinstance(obj, pd.Timestamp):
-                    return str(obj)
-                elif isinstance(obj, bool):
-                    return bool(obj)
-                elif isinstance(obj, dict):
-                    return {k: convert_types(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_types(item) for item in obj]
-                return obj
-            
-            report = convert_types(report)
-            return report
-            
-        except Exception as e:
-            print(f"生成报告错误: {str(e)}")
-            raise
+    # JSON格式报告生成功能已移除
 
 def main():
     try:
@@ -391,10 +361,7 @@ def main():
         print("\n正在绘制预测图表...")
         forecast_system.plot_forecast()
         
-        # 生成报告
-        print("\n正在生成预测报告...")
-        forecast_system.generate_report()
-        
+        # 报告生成功能已移除
         print("\n销量预测完成！")
         
     except Exception as e:
